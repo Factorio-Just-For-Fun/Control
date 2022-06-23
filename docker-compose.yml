@@ -1,0 +1,62 @@
+version: '3'
+
+services:
+  clusterio-master:
+    image: awesome/master
+    build:
+      context: .
+      dockerfile: Dockerfile-master
+    volumes:
+     - "./database:/clusterio/database"
+     - "./custom_plugin:/clusterio/custom_plugin:ro"
+    ports:
+     - "8080:8080"
+
+  clusterio-slave:
+    image: awesome/slave
+    build:
+      context: .
+      dockerfile: Dockerfile-slave
+    volumes:
+     - "./database-slave:/clusterio/database"
+     - "./custom_plugin:/clusterio/custom_plugin:ro"
+     - "./factorio:/factorio:ro"
+     - "./instances:/instances"
+    ports:
+     - "3152:3152/udp"
+     - "3153:3153/udp"
+  
+  grafana:
+    image: "grafana/grafana"
+    ports:
+      - "3000:3000"
+    volumes:
+      - "./grafana.ini:/etc/grafana/grafana.ini"
+      - "./grafana_data:/var/lib/grafana"
+
+  prometheus:
+    image: "prom/prometheus"
+    expose:
+      - "9090"
+    command:
+       - '--config.file=/etc/prometheus/prometheus.yml'
+       - '--storage.tsdb.path=/prometheus'
+       - '--web.console.libraries=/usr/share/prometheus/console_libraries'
+       - '--web.console.templates=/usr/share/prometheus/consoles'
+    volumes:
+      - "./prometheus.yml:/etc/prometheus/prometheus.yml"
+      - "./prometheus_data:/prometheus"
+
+  speedtest:
+    image: "jraviles/prometheus_speedtest"
+    expose:
+      - "9516"
+
+  node_exporter:
+    image: 'quay.io/prometheus/node-exporter:latest'
+    command:
+      - '--path.rootfs=/host'
+    pid: 'host'
+    restart: 'unless-stopped'
+    volumes:
+      - '/:/host:ro,rslave'

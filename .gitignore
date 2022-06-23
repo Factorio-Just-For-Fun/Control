@@ -1,0 +1,7 @@
+**/dist
+database/
+database-slave/
+grafana_data/
+prometheus_data/
+instances/
+factorio/

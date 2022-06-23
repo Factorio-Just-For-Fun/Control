@@ -1,0 +1,27 @@
+{
+    "name": "custom-plugn",
+    "version": "0.0.1",
+    "description": "Utilities for FJFF",
+    "author": "i_cant_think_of_a_username",
+    "homepage": "https://github.com/clusterio/clusterio#readme",
+    "scripts": {
+        "prepare": "webpack-cli --env production",
+        "test": "echo \"Error: run tests from root\" && exit 1"
+    },
+    "engines": {
+        "node": ">=12"
+    },
+    "peerDependencies": {
+        "@clusterio/lib": "^2.0.0-alpha.0"
+    },
+    "devDependencies": {
+        "@clusterio/lib": "^2.0.0-alpha.12",
+        "@clusterio/web_ui": "^2.0.0-alpha.12",
+        "webpack": "^5.36.2",
+        "webpack-cli": "^4.10.0",
+        "webpack-merge": "^5.2.0"
+    },
+    "publishConfig": {
+        "access": "public"
+    }
+}
