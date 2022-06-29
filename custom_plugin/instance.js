@@ -3,6 +3,7 @@
  */
  "use strict";
  const { libPlugin, libLuaTools } = require("@clusterio/lib");
+ const fs = require('node:fs/promises');
  
  class InstancePlugin extends libPlugin.BaseInstancePlugin {
     async init() {
@@ -12,7 +13,53 @@
             "LEAVE": "red_circle",
             "CHAT": "speech_left"
         }
+
+        this.datastorePath = this.instance.path("script-output", "ext", "datastore.out");
+        this.abortController = new AbortController();
+        
+        await fs.writeFile(this.datastorePath, "", "utf-8");
+        this.fileUpdateWatcher(this.datastorePath).catch(err => console.log);
     }
+
+    // Runs in a separate thread. When an update to the datastore file is made, read each line and call a handler
+    async fileUpdateWatcher(filename) {
+        const watcher = fs.watch(filename, { signal: this.abortController.signal });
+        try {
+            for await (const event of watcher) {
+                if (event.eventType != "change") continue;
+                const text = await fs.readFile(filename, "utf-8");
+                const lines = text.trim().split("\n");
+
+                if (!lines.length) continue;
+                for (let line of lines) await this.handleDatastoreLine(line);
+
+                await fs.writeFile(filename, "", "utf-8");
+            }
+        } catch (err) {
+            if (err.name !== "AbortError") throw err;
+        }
+    }
+
+    // Handle a line in the datastore. Only supports the "request" and "save" operations, and only for PlayerData
+    async handleDatastoreLine(line) {
+        const [ operation, category, name, ...jsonParts ] = line.split(" ");
+        console.log(line)
+
+        if (category != "PlayerData") throw "Invalid Category";
+        if (operation != "save" && operation != "request") throw "Invalid Operation";
+
+        if (operation == "request") {
+            let { data } = await this.info.messages.playerDataFetch.send(this.instance, { username: name });
+            if (!data) data = { valid: true };
+            console.log(data)
+            await this.sendRcon(`/sc local Datastore = require 'expcore.datastore'; Datastore.ingest('request', 'PlayerData', '${ name }', '${ JSON.stringify(data) }')`);
+        } else {
+            const json = jsonParts.join(" ");
+            console.log(json)
+            await this.info.messages.playerDataSave.send(this.instance, { username: name, data: JSON.parse(json) });
+        }
+    }
+
     
     onMasterConnectionEvent(event) {
         if (event === "connect") {
@@ -43,10 +90,10 @@
         if (output.action === "BAN") {
             const ban = {
                 player: output.message.split(" ")[0],
-                reason: output.message.split(": ")[1]
+                reason: output.message.split(": ")[1].replace(/\.$/, '')
             };
 
-            if (output.message.includes("<server>")) return; // Assume a console /ban is Clusterio updating the banlist
+            if (output.message.includes("Reciprocal Ban")) return; // Ignore reciprocal bans aka the reply-all of doom
             this.send(this.info.messages.ban, ban);
         }
     }

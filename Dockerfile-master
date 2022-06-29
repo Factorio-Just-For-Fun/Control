@@ -4,13 +4,11 @@ WORKDIR /clusterio
 VOLUME /clusterio/database
 VOLUME /clusterio/custom_plugin
 
-ENV CONFIG=database/config-master.json
-
 RUN echo '{"name":"clusterio-install","private":"true"}' > package.json
 RUN npm install @clusterio/master @clusterio/plugin-player_auth @clusterio/plugin-statistics_exporter
 
-RUN npm install discord.js
+RUN npm install discord.js mongodb
 RUN echo '[["player_auth","@clusterio/plugin-player_auth"],["statistics_exporter","@clusterio/plugin-statistics_exporter"],["custom_plugin","/clusterio/custom_plugin"]]' > plugin-list.json
 
 EXPOSE 8080
-ENTRYPOINT ./node_modules/.bin/clusteriomaster run --config=${CONFIG}
+ENTRYPOINT [ "./node_modules/.bin/clusteriomaster", "run", "--config=/clusterio/database/config-master.json" ]

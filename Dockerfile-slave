@@ -6,14 +6,12 @@ VOLUME /clusterio/custom_plugin
 VOLUME /factorio
 VOLUME /instances
 
-ENV CONFIG=database/config-slave.json
-
 RUN echo '{"name":"clusterio-install","private":"true"}' > package.json
 RUN npm install @clusterio/slave @clusterio/plugin-player_auth @clusterio/plugin-statistics_exporter
 
-RUN ./node_modules/.bin/clusterioslave config set slave.factorio_directory /factorio --config=${CONFIG}
+RUN ./node_modules/.bin/clusterioslave config set slave.factorio_directory /factorio --config=/clusterio/database/config-slave.json
 
 RUN npm install discord.js
 RUN echo '[["player_auth","@clusterio/plugin-player_auth"],["statistics_exporter","@clusterio/plugin-statistics_exporter"],["custom_plugin","/clusterio/custom_plugin"]]' > plugin-list.json
 
-ENTRYPOINT ./node_modules/.bin/clusterioslave run --config=${CONFIG}
+ENTRYPOINT [ "./node_modules/.bin/clusterioslave", "run", "--config=/clusterio/database/config-slave.json" ]

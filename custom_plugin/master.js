@@ -2,6 +2,7 @@
 const libPlugin = require("@clusterio/lib/plugin");
 const libLink = require("@clusterio/lib/link");
 const { Client, Intents } = require('discord.js');
+const { MongoClient } = require("mongodb");
 
 class MasterPlugin extends libPlugin.BaseMasterPlugin {
 	async init() {
@@ -16,16 +17,45 @@ class MasterPlugin extends libPlugin.BaseMasterPlugin {
 			}
 		});
 
-		await this.connect();
+		await this.connectMongo();
+		await this.connectDiscord();
 	}
 
-	// Connect and load all everything
-	async connect() {
-		// Load client and channels
-		if (this.client) {
-			this.client.destroy();
-			this.client = null;
+	// Connect and load everything mongo
+	async connectMongo() {
+		this.mongoClient = new MongoClient(this.master.config.get("custom_plugin.mongo_url"));
+		this.database = this.mongoClient.db('custom_plugin');
+		this.platerData = this.database.collection('playerData');
+	}
+
+	// Fetch player data
+	async playerDataFetchRequestHandler(message) {
+		const { username } = message.data;
+		const data = await this.platerData.findOne({ username: username });
+		if (data) {
+			delete data.username;
+			delete data._id;
 		}
+		
+		return {
+			data: data
+		};
+	}
+	
+	async playerDataSaveRequestHandler(message) {
+		const { username, data } = message.data;
+		data.username = username;
+		await this.platerData.replaceOne({ username: username }, data, { upsert: true });
+	}
+
+	// Connect and load everything discord
+	async connectDiscord() {
+		// Load client and channels
+		if (this.discordClient) {
+			this.discordClient.destroy();
+			this.discordClient = null;
+		}
+
 		this.channels = {};
 		
 		// Get token if exists
@@ -35,21 +65,21 @@ class MasterPlugin extends libPlugin.BaseMasterPlugin {
 			return;
 		}
 
-		this.client = new Client({ intents: [Intents.FLAGS.GUILDS, Intents.FLAGS.GUILD_MESSAGES] });;
+		this.discordClient = new Client({ intents: [Intents.FLAGS.GUILDS, Intents.FLAGS.GUILD_MESSAGES] });;
 		
 		// Hanndle messages
-		this.client.on("messageCreate", (message) => {
+		this.discordClient.on("messageCreate", (message) => {
 			this.onDiscordMessage(message).catch(err => { this.logger.error(`Unexpected error:\n${err.stack}`); });
 		});
 
 		// Load token
 		this.logger.info("Logging in to Discord");
 		try {
-			await this.client.login(token);
+			await this.discordClient.login(token);
 		} catch (err) {
 			this.logger.error(`Error logging in to Discord, bridge is offline:\n${err.stack}`);
-			this.client.destroy();
-			this.client = null;
+			this.discordClient.destroy();
+			this.discordClient = null;
 			return;
 		}
 
@@ -103,14 +133,14 @@ class MasterPlugin extends libPlugin.BaseMasterPlugin {
 	async ingameChatEventHandler(message) {
 		let { instanceId, text } = message.data;
 
-		const channel = await this.client.channels.fetch(this.master.instances.get(instanceId).config.get("custom_plugin.chat_channel"));
+		const channel = await this.discordClient.channels.fetch(this.master.instances.get(instanceId).config.get("custom_plugin.chat_channel"));
 		await channel.send({ content: text, disableMentions: "all" });
 	}
 
 	async ingameActionEventHandler(message) {
 		let { instanceId, text } = message.data;
 
-		const channel = await this.client.channels.fetch(this.master.instances.get(instanceId).config.get("custom_plugin.console_channel"));
+		const channel = await this.discordClient.channels.fetch(this.master.instances.get(instanceId).config.get("custom_plugin.console_channel"));
 		await channel.send({ content: text, disableMentions: "all" });
 	}
 
@@ -122,7 +152,7 @@ class MasterPlugin extends libPlugin.BaseMasterPlugin {
 
 		user.isBanned = true;
 		user.banReason = reason;
-		this.broadcastEventToSlaves(libLink.messages.banlistUpdate, { name: player, banned: true, reason: reason });
+		this.broadcastEventToSlaves(libLink.messages.banlistUpdate, { name: player, banned: true, reason: "Reciprocal Ban" });
 	}
 }
 

@@ -10,7 +10,14 @@ MasterConfigGroup.define({
 	title: "Bot Token",
 	description: "Bot token to log into discord with.",
 	type: "string",
-	optional: true,
+    initial_value: ""
+});
+MasterConfigGroup.define({
+	name: "mongo_url",
+	title: "MongoDB URL",
+	description: "Where to login to mongodb",
+	type: "string",
+    initial_value: "mongodb://root:ThisIsNotExposedPublically@mongodb/"
 });
 MasterConfigGroup.finalize();
 
@@ -51,8 +58,35 @@ module.exports = {
             forwardTo: "master",
             eventProperties: {
                 "player": { type: "string" },
-                "reason": { type: "string" },
+                "reason": { type: "string" }
             },
+        }),
+
+        // Fetch data from mongo
+        playerDataFetch: new libLink.Request({
+            type: "custom_plugin:fetch-player-data",
+            links: [ "instance-slave", "slave-master" ],
+            forwardTo: "master",
+            requestRequired: [ "username" ],
+            requestProperties: {
+                username: { "type": "string" }
+            },
+            responseRequired: [ "data" ],
+            responseProperties: {
+                data: { type: [ "object", "null" ] }
+            }
+        }),
+
+        // Save data to mongo
+        playerDataSave: new libLink.Request({
+            type: "custom_plugin:save-player-data",
+            links: [ "instance-slave", "slave-master" ],
+            forwardTo: "master",
+            requestRequired: [ "username", "data" ],
+            requestProperties: {
+                username: { "type": "string" },
+                data: { type: "object" }
+            }
         }),
         
         // When a discord message needs to be sent to the instance
