@@ -80,20 +80,21 @@
         if (output.type !== "action") return;
         
         // Send to Discord
+        let content = output.message.replace(/\[\/?color(\=((\d{1,3},\d{1,3},\d{1,3})|(\w+)))?\]/g, '')
         if (output.action in this.messagePrefixes) {
-            this.send(this.info.messages.ingameChat, { text: `:${ this.messagePrefixes[output.action] }: | ${output.message}`, instanceId: this.instance.id });
+            this.send(this.info.messages.ingameChat, { text: `:${ this.messagePrefixes[output.action] }: | ${ content }`, instanceId: this.instance.id });
         } else {
-            this.send(this.info.messages.ingameAction, { text: `? | ${output.message}`, instanceId: this.instance.id });
+            this.send(this.info.messages.ingameAction, { text: `? | ${ content }`, instanceId: this.instance.id });
         }
 
         // Ban List Sync
         if (output.action === "BAN") {
             const ban = {
-                player: output.message.split(" ")[0],
-                reason: output.message.split(": ")[1].replace(/\.$/, '')
+                player: content.split(" ")[0],
+                reason: content.split(": ")[1].replace(/\.$/, '')
             };
 
-            if (output.message.includes("Reciprocal Ban")) return; // Ignore reciprocal bans aka the reply-all of doom
+            if (content.includes("Reciprocal Ban")) return; // Ignore reciprocal bans aka the reply-all of doom
             this.send(this.info.messages.ban, ban);
         }
     }
