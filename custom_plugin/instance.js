@@ -18,11 +18,11 @@
         this.abortController = new AbortController();
         
         await fs.writeFile(this.datastorePath, "", "utf-8");
-        this.fileUpdateWatcher(this.datastorePath).catch(err => console.log);
+        this.fileUpdateWatcher(this.datastorePath, this.handleDatastoreLine).catch(err => console.log);
     }
 
     // Runs in a separate thread. When an update to the datastore file is made, read each line and call a handler
-    async fileUpdateWatcher(filename) {
+    async fileUpdateWatcher(filename, handler) {
         const watcher = fs.watch(filename, { signal: this.abortController.signal });
         try {
             for await (const event of watcher) {
@@ -31,7 +31,7 @@
                 const lines = text.trim().split("\n");
 
                 if (!lines.length) continue;
-                for (let line of lines) await this.handleDatastoreLine(line);
+                for (let line of lines) await handler(line);
 
                 await fs.writeFile(filename, "", "utf-8");
             }

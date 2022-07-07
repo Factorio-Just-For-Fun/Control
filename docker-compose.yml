@@ -23,8 +23,8 @@ services:
      - "./factorio:/factorio:ro"
      - "./instances:/instances"
     ports:
-     - "3152:3152/udp"
-     - "3153:3153/udp"
+     - "34197:34197/udp"
+     - "34679:34679/udp"
   
   mongodb:
     image: mongo:latest
