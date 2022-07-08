@@ -3,15 +3,17 @@ FROM node:18
 WORKDIR /clusterio
 VOLUME /clusterio/database
 VOLUME /clusterio/custom_plugin
-VOLUME /factorio
 VOLUME /instances
 
 RUN echo '{"name":"clusterio-install","private":"true"}' > package.json
-RUN npm install @clusterio/slave @clusterio/plugin-player_auth @clusterio/plugin-statistics_exporter
+RUN npm install @clusterio/slave
 
 RUN ./node_modules/.bin/clusterioslave config set slave.factorio_directory /factorio --config=/clusterio/database/config-slave.json
 
 RUN npm install discord.js
-RUN echo '[["player_auth","@clusterio/plugin-player_auth"],["statistics_exporter","@clusterio/plugin-statistics_exporter"],["custom_plugin","/clusterio/custom_plugin"]]' > plugin-list.json
+RUN echo '[["custom_plugin","/clusterio/custom_plugin"]]' > plugin-list.json
+
+ADD https://www.factorio.com/get-download/latest/headless/linux64 /tmp/factorio.tar.gx
+RUN tar -xf /tmp/factorio.tar.gx
 
 ENTRYPOINT [ "./node_modules/.bin/clusterioslave", "run", "--config=/clusterio/database/config-slave.json" ]

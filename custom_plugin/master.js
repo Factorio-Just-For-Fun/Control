@@ -30,8 +30,10 @@ class MasterPlugin extends libPlugin.BaseMasterPlugin {
 
 	// Fetch player data
 	async playerDataFetchRequestHandler(message) {
+		console.log(message);
 		const { username } = message.data;
 		const data = await this.platerData.findOne({ username: username });
+		console.log(data);
 		if (data) {
 			delete data.username;
 			delete data._id;

@@ -18,7 +18,7 @@
         this.abortController = new AbortController();
         
         await fs.writeFile(this.datastorePath, "", "utf-8");
-        this.fileUpdateWatcher(this.datastorePath, this.handleDatastoreLine).catch(err => console.log);
+        this.fileUpdateWatcher(this.datastorePath, async line => await this.handleDatastoreLine(line)).catch(console.log);
     }
 
     // Runs in a separate thread. When an update to the datastore file is made, read each line and call a handler
@@ -43,17 +43,16 @@
     // Handle a line in the datastore. Only supports the "request" and "save" operations, and only for PlayerData
     async handleDatastoreLine(line) {
         const [ operation, category, name, ...jsonParts ] = line.split(" ");
-        console.log(line)
 
         if (category != "PlayerData") throw "Invalid Category";
         if (operation != "save" && operation != "request") throw "Invalid Operation";
 
         if (operation == "request") {
+            console.log(this)
             let { data } = await this.info.messages.playerDataFetch.send(this.instance, { username: name });
             if (!data) data = { valid: true };
-            console.log(data)
             await this.sendRcon(`/sc local Datastore = require 'expcore.datastore'; Datastore.ingest('request', 'PlayerData', '${ name }', '${ JSON.stringify(data) }')`);
-        } else {
+        } else if (operation == "save") {
             const json = jsonParts.join(" ");
             console.log(json)
             await this.info.messages.playerDataSave.send(this.instance, { username: name, data: JSON.parse(json) });
