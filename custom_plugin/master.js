@@ -162,7 +162,7 @@ class MasterPlugin extends libPlugin.BaseMasterPlugin {
 
 		user.isBanned = true;
 		user.banReason = reason;
-		this.broadcastEventToSlaves(libLink.messages.banlistUpdate, { name: player, banned: true, reason: "Reciprocal Ban" });
+		this.broadcastEventToSlaves(libLink.messages.banlistUpdate, { name: player, banned: true, reason: `Clusterio Ban (Reason: ${ reason })` });
 	}
 }
 

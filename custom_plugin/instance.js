@@ -103,7 +103,7 @@
                 reason: content.split(": ")[1].replace(/\.$/, '')
             };
 
-            if (content.includes("Reciprocal Ban")) return; // Ignore reciprocal bans aka the reply-all of doom
+            if (content.includes("Clusterio Ban")) return; // Ignore reciprocal bans aka the reply-all of doom
             this.send(this.info.messages.ban, ban);
         }
     }
