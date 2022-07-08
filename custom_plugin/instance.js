@@ -14,11 +14,16 @@
             "CHAT": "speech_left"
         }
 
-        this.datastorePath = this.instance.path("script-output", "ext", "datastore.out");
-        this.abortController = new AbortController();
-        
-        await fs.writeFile(this.datastorePath, "", "utf-8");
-        this.fileUpdateWatcher(this.datastorePath, async line => await this.handleDatastoreLine(line)).catch(console.log);
+        if (this.instance.config.get("custom_plugin.custom_scenario")) {
+            this.datastorePath = this.instance.path("script-output", "ext", "datastore.out");
+            this.discordAlertPath = this.instance.path("script-output", "ext", "discord.out");
+            this.abortController = new AbortController();
+            
+            await fs.writeFile(this.datastorePath, "", "utf-8");
+            await fs.writeFile(this.discordAlertPath, "", "utf-8");
+            this.fileUpdateWatcher(this.datastorePath, async line => await this.handleDatastoreLine(line)).catch(console.log);
+            this.fileUpdateWatcher(this.discordAlertPath, async line => await this.handleDiscordAlertLine(line)).catch(console.log);
+        }
     }
 
     // Runs in a separate thread. When an update to the datastore file is made, read each line and call a handler
@@ -48,15 +53,20 @@
         if (operation != "save" && operation != "request") throw "Invalid Operation";
 
         if (operation == "request") {
-            console.log(this)
             let { data } = await this.info.messages.playerDataFetch.send(this.instance, { username: name });
             if (!data) data = { valid: true };
+
             await this.sendRcon(`/sc local Datastore = require 'expcore.datastore'; Datastore.ingest('request', 'PlayerData', '${ name }', '${ JSON.stringify(data) }')`);
         } else if (operation == "save") {
             const json = jsonParts.join(" ");
-            console.log(json)
             await this.info.messages.playerDataSave.send(this.instance, { username: name, data: JSON.parse(json) });
         }
+    }
+
+    // Someth ingame sends an alert in the form of an embed
+    async handleDiscordAlertLine(line) {
+        const data = JSON.parse(line.replace("${serverName}", this.instance.name));
+        await this.send(this.info.messages.ingameActionEmbed, { embed: data, instanceId: this.instance.id });
     }
 
     
@@ -82,7 +92,7 @@
         let content = output.message.replace(/\[\/?color(\=((\d{1,3},\d{1,3},\d{1,3})|(\w+)))?\]/g, '')
         if (output.action in this.messagePrefixes) {
             this.send(this.info.messages.ingameChat, { text: `:${ this.messagePrefixes[output.action] }: | ${ content }`, instanceId: this.instance.id });
-        } else {
+        } else if (!this.instance.config.get("custom_plugin.custom_scenario")) {
             this.send(this.info.messages.ingameAction, { text: `? | ${ content }`, instanceId: this.instance.id });
         }
 

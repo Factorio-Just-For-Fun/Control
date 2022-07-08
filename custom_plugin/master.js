@@ -30,10 +30,8 @@ class MasterPlugin extends libPlugin.BaseMasterPlugin {
 
 	// Fetch player data
 	async playerDataFetchRequestHandler(message) {
-		console.log(message);
 		const { username } = message.data;
 		const data = await this.platerData.findOne({ username: username });
-		console.log(data);
 		if (data) {
 			delete data.username;
 			delete data._id;
@@ -132,6 +130,7 @@ class MasterPlugin extends libPlugin.BaseMasterPlugin {
 		}
 	}
 
+	// Send ingame chat to discord
 	async ingameChatEventHandler(message) {
 		let { instanceId, text } = message.data;
 
@@ -139,11 +138,20 @@ class MasterPlugin extends libPlugin.BaseMasterPlugin {
 		await channel.send({ content: text, disableMentions: "all" });
 	}
 
+	// Send ingame actions to discord
 	async ingameActionEventHandler(message) {
 		let { instanceId, text } = message.data;
 
 		const channel = await this.discordClient.channels.fetch(this.master.instances.get(instanceId).config.get("custom_plugin.console_channel"));
 		await channel.send({ content: text, disableMentions: "all" });
+	}
+
+	// Send ingame actions to discord, but fancier
+	async ingameActionEmbedEventHandler(message) {
+		let { instanceId, embed } = message.data;
+
+		const channel = await this.discordClient.channels.fetch(this.master.instances.get(instanceId).config.get("custom_plugin.console_channel"));
+		await channel.send({ embeds: [ embed ], disableMentions: "all" });
 	}
 
 	async banEventHandler(message) {

@@ -39,6 +39,13 @@ InstanceConfigGroup.define({
 	type: "string",
 	initial_value: "0",
 });
+InstanceConfigGroup.define({
+	name: "custom_scenario",
+	title: "Custom Scenario",
+	description: "Whether the FJFF Custom Scenario is in use on this server.",
+	type: "boolean",
+	initial_value: true,
+});
 InstanceConfigGroup.finalize();
 
 
@@ -129,6 +136,17 @@ module.exports = {
             forwardTo: "master",
             eventProperties: {
                 "text": { type: "string" },
+                "instanceId" : { type: "number" }
+            },
+        }),
+
+        // When ingame needs to relay an alert in the form of an embed to the master
+        ingameActionEmbed: new libLink.Event({
+            type: "custom_plugin:ingame-action-embed",
+            links: [ "instance-slave", "slave-master" ],
+            forwardTo: "master",
+            eventProperties: {
+                "embed": { type: "object" },
                 "instanceId" : { type: "number" }
             },
         }),
