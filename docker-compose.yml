@@ -25,6 +25,7 @@ services:
     ports:
      - "34197:34197/udp"
      - "34679:34679/udp"
+     - "34921:34921/udp"
   
   mongodb:
     image: mongo:latest
