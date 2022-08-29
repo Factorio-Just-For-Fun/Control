@@ -13,7 +13,4 @@ RUN ./node_modules/.bin/clusterioslave config set slave.factorio_directory /fact
 RUN npm install discord.js
 RUN echo '[["custom_plugin","/clusterio/custom_plugin"]]' > plugin-list.json
 
-ADD https://www.factorio.com/get-download/latest/headless/linux64 /tmp/factorio.tar.gx
-RUN tar -xf /tmp/factorio.tar.gx
-
 ENTRYPOINT [ "./node_modules/.bin/clusterioslave", "run", "--config=/clusterio/database/config-slave.json" ]
