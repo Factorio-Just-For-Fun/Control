@@ -1,7 +1,7 @@
 "use strict";
 const libPlugin = require("@clusterio/lib/plugin");
 const libLink = require("@clusterio/lib/link");
-const { Client, Intents } = require('discord.js');
+const { Client, GatewayIntentBits } = require('discord.js');
 const { MongoClient } = require("mongodb");
 
 class MasterPlugin extends libPlugin.BaseMasterPlugin {
@@ -65,7 +65,7 @@ class MasterPlugin extends libPlugin.BaseMasterPlugin {
 			return;
 		}
 
-		this.discordClient = new Client({ intents: [Intents.FLAGS.GUILDS, Intents.FLAGS.GUILD_MESSAGES] });;
+		this.discordClient = new Client({ intents: [ GatewayIntentBits.MessageContent, GatewayIntentBits.GuildMessages, GatewayIntentBits.Guilds ] });;
 		
 		// Hanndle messages
 		this.discordClient.on("messageCreate", (message) => {
