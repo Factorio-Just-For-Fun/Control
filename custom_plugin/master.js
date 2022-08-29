@@ -65,7 +65,7 @@ class MasterPlugin extends libPlugin.BaseMasterPlugin {
 			return;
 		}
 
-		this.discordClient = new Client({ intents: [ GatewayIntentBits.GuildMessages, GatewayIntentBits.Guilds ] });;
+		this.discordClient = new Client({ intents: [ GatewayIntentBits.GuildMessages, GatewayIntentBits.Guilds, GatewayIntentBits.MessageContent ] });;
 		
 		// Hanndle messages
 		this.discordClient.on("messageCreate", (message) => {
