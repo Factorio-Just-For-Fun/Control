@@ -150,6 +150,7 @@ class MasterPlugin extends libPlugin.BaseMasterPlugin {
 	async ingameActionEmbedEventHandler(message) {
 		let { instanceId, embed } = message.data;
 
+		embed.color = parseInt(embed.color);
 		const channel = await this.discordClient.channels.fetch(this.master.instances.get(instanceId).config.get("custom_plugin.console_channel"));
 		await channel.send({ embeds: [ embed ], disableMentions: "all" });
 	}
