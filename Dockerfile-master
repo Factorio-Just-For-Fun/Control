@@ -6,6 +6,8 @@ VOLUME /clusterio/custom_plugin
 
 RUN echo '{"name":"clusterio-install","private":"true"}' > package.json
 RUN npm install @clusterio/master
+RUN npm i @clusterio/ctl
+RUN ./config.sh
 
 RUN npm install discord.js mongodb
 RUN echo '[["custom_plugin","/clusterio/custom_plugin"]]' > plugin-list.json
