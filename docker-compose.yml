@@ -1,24 +1,24 @@
 version: '3'
 
 services:
-  clusterio-master:
-    image: awesome/master
+  clusterio-controller:
+    image: awesome/controller
     build:
       context: .
-      dockerfile: Dockerfile-master
+      dockerfile: Dockerfile-controller
     volumes:
      - "./database:/clusterio/database"
      - "./custom_plugin:/clusterio/custom_plugin:ro"
     ports:
      - "8081:8080"
 
-  clusterio-slave:
-    image: awesome/slave
+  clusterio-host:
+    image: awesome/host
     build:
       context: .
-      dockerfile: Dockerfile-slave
+      dockerfile: Dockerfile-host
     volumes:
-     - "./database-slave:/clusterio/database"
+     - "./database:/clusterio/database"
      - "./custom_plugin:/clusterio/custom_plugin:ro"
      - "./factorio:/factorio:ro"
      - "./instances:/instances"

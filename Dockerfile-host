@@ -1,16 +1,15 @@
 FROM node:18
 
 WORKDIR /clusterio
+
 VOLUME /clusterio/database
 VOLUME /clusterio/custom_plugin
 VOLUME /instances
 
 RUN echo '{"name":"clusterio-install","private":"true"}' > package.json
-RUN npm install @clusterio/slave
-
-RUN ./node_modules/.bin/clusterioslave config set slave.factorio_directory /factorio --config=/clusterio/database/config-slave.json
+RUN npm install @clusterio/host
 
 RUN npm install discord.js
 RUN echo '[["custom_plugin","/clusterio/custom_plugin"]]' > plugin-list.json
 
-ENTRYPOINT [ "./node_modules/.bin/clusterioslave", "run", "--config=/clusterio/database/config-slave.json" ]
+ENTRYPOINT [ "./node_modules/.bin/clusteriohost", "run", "--config=/clusterio/database/config-host.json" ]

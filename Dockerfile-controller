@@ -1,16 +1,17 @@
 FROM node:18
 
 WORKDIR /clusterio
+COPY config.sh ./config.sh
+
 VOLUME /clusterio/database
 VOLUME /clusterio/custom_plugin
 
 RUN echo '{"name":"clusterio-install","private":"true"}' > package.json
-RUN npm install @clusterio/master
-RUN npm i @clusterio/ctl
+RUN npm install @clusterio/controller
 RUN ./config.sh
 
 RUN npm install discord.js mongodb
 RUN echo '[["custom_plugin","/clusterio/custom_plugin"]]' > plugin-list.json
 
 EXPOSE 8080
-ENTRYPOINT [ "./node_modules/.bin/clusteriomaster", "run", "--config=/clusterio/database/config-master.json" ]
+ENTRYPOINT [ "./node_modules/.bin/clusteriocontroller", "run", "--config=/clusterio/database/config-controller.json" ]
