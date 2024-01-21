@@ -9,7 +9,7 @@ services:
     volumes:
      - "./database:/clusterio/database"
      - "./custom_plugin:/clusterio/custom_plugin:ro"
-     - "./mods:/mods"
+     - "./mods:/clusterio/mods"
     ports:
      - "8081:8080"
 
