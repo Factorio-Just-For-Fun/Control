@@ -1,29 +1,32 @@
 /**
  * @module
  */
- "use strict";
- const { libPlugin, libLuaTools } = require("@clusterio/lib");
- const fs = require('node:fs/promises');
+"use strict";
+
+const { BaseInstancePlugin } = require("@clusterio/host");
+const fs = require('node:fs/promises');
+
+const { BanEvent, RunCommandEvent, IngameChatEvent, IngameActionEmbedEvent, RequestPlayerData, UpdatePlayerData } = require("./messages.js");
  
- class InstancePlugin extends libPlugin.BaseInstancePlugin {
+class InstancePlugin extends BaseInstancePlugin {
     async init() {
-        this.queue = [];
         this.messagePrefixes = {
             "JOIN": "green_circle",
             "LEAVE": "red_circle",
             "CHAT": "speech_left"
         }
 
-        if (this.instance.config.get("custom_plugin.custom_scenario")) {
-            this.datastorePath = this.instance.path("script-output", "ext", "datastore.out");
-            this.discordAlertPath = this.instance.path("script-output", "ext", "discord.out");
-            this.abortController = new AbortController();
-            
-            await fs.writeFile(this.datastorePath, "", "utf-8");
-            await fs.writeFile(this.discordAlertPath, "", "utf-8");
-            this.fileUpdateWatcher(this.datastorePath, async line => await this.handleDatastoreLine(line)).catch(console.log);
-            this.fileUpdateWatcher(this.discordAlertPath, async line => await this.handleDiscordAlertLine(line)).catch(console.log);
-        }
+        this.datastorePath = this.instance.path("script-output", "ext", "datastore.out");
+        this.discordAlertPath = this.instance.path("script-output", "ext", "discord.out");
+        this.abortController = new AbortController();
+        
+        await fs.writeFile(this.datastorePath, "", "utf-8");
+        await fs.writeFile(this.discordAlertPath, "", "utf-8");
+
+        this.fileUpdateWatcher(this.datastorePath, async line => await this.handleDatastoreLine(line)).catch(console.log);
+        this.fileUpdateWatcher(this.discordAlertPath, async line => await this.handleDiscordAlertLine(line)).catch(console.log);
+
+        this.instance.handle(RunCommandEvent, this.runCommandEventHandler.bind(this))
     }
 
     // Runs in a separate thread. When an update to the datastore file is made, read each line and call a handler
@@ -53,35 +56,21 @@
         if (operation != "save" && operation != "request") throw "Invalid Operation";
 
         if (operation == "request") {
-            let { data } = await this.info.messages.playerDataFetch.send(this.instance, { username: name });
-            if (!data) data = { valid: true };
+            let data = await this.instance.sendTo("controller", new RequestPlayerData(name));
+            console.log(data);
+            if (!data) data = '{"valid":true}';
 
-            await this.sendRcon(`/sc local Datastore = require 'expcore.datastore'; Datastore.ingest('request', 'PlayerData', '${ name }', '${ JSON.stringify(data) }')`);
+            await this.sendRcon(`/sc local Datastore = require 'expcore.datastore'; Datastore.ingest('request', 'PlayerData', '${ name }', '${ data }')`);
         } else if (operation == "save") {
-            const json = jsonParts.join(" ");
-            await this.info.messages.playerDataSave.send(this.instance, { username: name, data: JSON.parse(json) });
+            const data = jsonParts.join(" ");
+            await this.instance.sendTo("controller", new UpdatePlayerData(name, data));
         }
     }
 
     // Someth ingame sends an alert in the form of an embed
     async handleDiscordAlertLine(line) {
         const data = JSON.parse(line.replace("${serverName}", this.instance.name));
-        await this.send(this.info.messages.ingameActionEmbed, { embed: data, instanceId: this.instance.id });
-    }
-
-    
-    onMasterConnectionEvent(event) {
-        if (event === "connect") {
-            for (let item of this.queue) {
-                item.event.send(this.instance, item.message);
-            }
-            this.queue = [];
-        }
-    }
-
-    send(event, message) {
-        if (this.slave.connected) event.send(this.instance, message);
-        else this.queue.push({ event, message });
+        await this.instance.sendTo("controller", new IngameActionEmbedEvent(this.instance.config.get("custom_plugin.console_channel"), data));
     }
 
     // When someth happens on the server
@@ -91,41 +80,21 @@
         // Send to Discord
         let content = output.message.replace(/\[\/?color(\=((\d{1,3},\d{1,3},\d{1,3})|(\w+)))?\]/g, '')
         if (output.action in this.messagePrefixes) {
-            this.send(this.info.messages.ingameChat, { text: `:${ this.messagePrefixes[output.action] }: | ${ content }`, instanceId: this.instance.id });
-        } else if (!this.instance.config.get("custom_plugin.custom_scenario")) {
-            this.send(this.info.messages.ingameAction, { text: `? | ${ content }`, instanceId: this.instance.id });
+            this.instance.sendTo("controller", new IngameChatEvent(this.instance.config.get("custom_plugin.chat_channel"), `:${ this.messagePrefixes[output.action] }: | ${ content }`));
         }
 
         // Ban List Sync
         if (output.action === "BAN") {
-            const ban = {
-                player: content.split(" ")[0],
-                reason: content.split(": ")[1].replace(/\.$/, '')
-            };
-
             if (content.includes("Clusterio Ban")) return; // Ignore reciprocal bans aka the reply-all of doom
-            this.send(this.info.messages.ban, ban);
-        }
-    }
 
-    // When someone talks on discord
-    async discordChatEventHandler(message) {
-        let { author, text } = message.data;
-        await this.sendRcon(`/sc game.print('[color=#7289DA][Discord] ${ libLuaTools.escapeString(author) }: ${ libLuaTools.escapeString(text) }[/color]')`);
+            this.instance.sendTo("controller", new BanEvent(content.split(" ")[0], content.split(": ")[1].replace(/\.$/, '')));
+        }
     }
 
     // When a command is ran on discord
-    async discordCommandEventHandler(message) {
-        let { command } = message.data;
-        await this.sendRcon(`/${command}`);
-    }
-
-    // When a player list is requested
-    async playerListRequestHandler(message) {
-        const response = await this.sendRcon('/players online');
-        return {
-            list: response.split("\n").slice(1, -1).map(it => it.trim().replace(" (online)", "")) // Remove 1st and last element, remove (online), trim space
-        }
+    async runCommandEventHandler(message) {
+        let { command } = message;
+        await this.instance.sendRcon(command);
     }
  }
  

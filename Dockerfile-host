@@ -11,5 +11,6 @@ RUN npm install @clusterio/host
 
 RUN npm install discord.js
 RUN echo '[["custom_plugin","/clusterio/custom_plugin"]]' > plugin-list.json
+RUN perl -p -i -e 's|\${dir}\${name}|\${dir}\/\${name}|g' node_modules/\@clusterio/lib/dist/src/file_ops.js
 
 ENTRYPOINT [ "./node_modules/.bin/clusteriohost", "run", "--config=/clusterio/database/config-host.json" ]
