@@ -59,7 +59,7 @@ class InstancePlugin extends BaseInstancePlugin {
             let data = await this.instance.sendTo("controller", new RequestPlayerData(name));
             if (!data) data = '{"valid":true}';
 
-            await this.sendRcon(`/sc local Datastore = require 'expcore.datastore'; Datastore.ingest('request', 'PlayerData', '${ name }', '${ data }')`);
+            await this.sendRcon(`/interface Datastore.ingest('request', 'PlayerData', '${ name }', '${ data }')`);
         } else if (operation == "save") {
             const data = jsonParts.join(" ");
             await this.instance.sendTo("controller", new UpdatePlayerData(name, data));
