@@ -4,6 +4,14 @@
 echo "Stopping Factorio server..."
 sudo systemctl stop factorio
 
+# Updateds the system
+echo "System updating"
+Sudo apt update
+
+# Upgrades the system
+echo "System upgrading"
+sudo apt upgrade -y
+
 # Navigate to your Factorio directory
 cd /opt/Control/factorio || { echo "Failed to change directory to /opt/Control/factorio"; exit 1; }
 
