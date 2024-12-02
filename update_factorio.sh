@@ -6,7 +6,7 @@ sudo systemctl stop factorio
 
 # Updateds the system
 echo "System updating"
-Sudo apt update
+sudo apt update
 
 # Upgrades the system
 echo "System upgrading"
