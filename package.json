@@ -1,0 +1,17 @@
+{
+  "name": "rconmanager",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "discord.js": "^14.17.3",
+    "mongodb": "^6.13.0",
+    "rcon-client": "^4.2.5",
+    "tail": "^2.2.6"
+  }
+}

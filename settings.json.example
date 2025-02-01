@@ -1,0 +1,20 @@
+{
+    "discordToken": "nope!",
+    "database": {
+        "host": "even our mongodb database is stored in pelican panel mongodb://admin-user-here:nope!@172.18.0.1:27017/",
+        "database": "custom_plugin is used on FJFF for legacy reasons",
+        "collection": "playerData is used on FJFF for legacy reasons"
+    },
+
+    "servers": {
+        "FJFF All Welcome": {
+            "host": "172.18.0.1 is used in Pelican/Pterodactyl panel",
+            "port": "33197 is the rcon port, not the game port",
+            "password": "definitely nope!",
+            "chatChannel": "this isnt really a secret 867854345739304960",
+            "consoleChannel": "this also isnt really a secret 867857763895738388",
+            "datastore": "this is a mount in pelican panel /factorio-logs/script-output-space-age/ext/datastore.out",
+            "log": "this is a mount in pelican panel /factorio-logs/space-age.log"
+        }
+    }
+}
