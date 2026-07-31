@@ -13,5 +13,9 @@
     "mongodb": "^6.13.0",
     "rcon-client": "^4.2.5",
     "tail": "^2.2.6"
+  },
+  "devDependencies": {
+    "typescript": "5.4.5",
+    "ts-node": "10.9.2"
   }
 }
